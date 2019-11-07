@@ -1,31 +1,26 @@
 package com.example.fetchwithretrofit;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -43,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
     private ProgressBar progressBar;
     private JsonPlaceHolderApi jsonPlaceHolderApi;
     private final String SAMPLE_URL = "http://jsonplaceholder.typicode.com/posts";
+    private List<Fetch> proccesses;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
         setContentView(R.layout.activity_main);
 
         postList = new ArrayList<>();
+        proccesses = new ArrayList<>();
         recyclerView = findViewById(R.id.post_recycler);
         progressBar = findViewById(R.id.progressBar);
         button = findViewById(R.id.button_fetch);
@@ -68,16 +65,9 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
                 .build();
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
-
-//        prepareData();
-//        showData();
     }
 
-    private void clickFetch() {
-        getData();
-        showData();
-        Toast.makeText(MainActivity.this, "Returned " + postList.size() + " Posts", Toast.LENGTH_SHORT).show();
-    }
+
 
     private boolean isConnected() {
         boolean connected = false;
@@ -117,9 +107,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
     }
 
     private void prepareData(){
-//        if (postList == null)
             postList = new ArrayList<>();
-//        postList.clear();
     }
 
     private void showData(){
@@ -141,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
         protected void onPreExecute() {
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
+
         }
 
         @Override
@@ -152,12 +141,23 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            progressBar.setVisibility(View.GONE);
+            proccesses.clear();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    progressBar.setVisibility(View.GONE);
+                }
+            }, 500);
             showData();
-            Toast.makeText(MainActivity.this, "finished", Toast.LENGTH_SHORT).show();
-
+            Toast.makeText(MainActivity.this, "Returned " + postList.size() + " Posts", Toast.LENGTH_SHORT).show();
         }
     }
 
-
+    private void clickFetch() {
+        if (proccesses.size() == 0) {
+            Fetch fetch = new Fetch();
+            fetch.execute();
+            proccesses.add(fetch);
+        }
+    }
 }
